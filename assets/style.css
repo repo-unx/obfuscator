@@ -1,0 +1,172 @@
+/* Advanced PHP Obfuscator Styles */
+:root {
+    --primary-color: #3a86ff;
+    --secondary-color: #5e60ce;
+    --success-color: #2ec4b6;
+    --danger-color: #e71d36;
+    --warning-color: #ff9f1c;
+    --light-color: #f8f9fa;
+    --dark-color: #212529;
+    --code-bg: #f6f8fa;
+    --code-border: #e1e4e8;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    background-color: #f8f9fa;
+    color: #343a40;
+}
+
+/* Navbar styling */
+.navbar-brand i {
+    margin-right: 10px;
+}
+
+/* Card styling */
+.card {
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 24px;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    font-weight: 600;
+    padding: 12px 16px;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+/* Form controls */
+.form-control, .btn {
+    border-radius: 6px;
+}
+
+.form-control:focus {
+    box-shadow: 0 0 0 0.25rem rgba(58, 134, 255, 0.25);
+    border-color: var(--primary-color);
+}
+
+.form-check-input:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.25rem rgba(58, 134, 255, 0.25);
+}
+
+/* Code areas */
+.code-area {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    tab-size: 4;
+}
+
+.result-code {
+    background-color: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 6px;
+    padding: 15px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    max-height: 500px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: #2a75ee;
+    border-color: #2a75ee;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+.copy-btn {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+}
+
+/* Info list */
+.info-list {
+    padding-left: 20px;
+}
+
+.info-list li {
+    margin-bottom: 8px;
+}
+
+/* Alerts */
+.alert {
+    border-radius: 6px;
+    font-size: 0.95rem;
+    padding: 12px 16px;
+}
+
+.alert i {
+    margin-right: 8px;
+}
+
+/* Footer */
+footer {
+    margin-top: 2rem;
+    padding: 1.5rem 0;
+    background-color: var(--dark-color);
+    color: white;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-header h5 {
+        font-size: 1.1rem;
+    }
+    
+    .result-code {
+        max-height: 300px;
+    }
+}
+
+/* Miscellaneous */
+.text-primary {
+    color: var(--primary-color) !important;
+}
+
+.text-success {
+    color: var(--success-color) !important;
+}
+
+.text-danger {
+    color: var(--danger-color) !important;
+}
+
+.bg-primary {
+    background-color: var(--primary-color) !important;
+}
+
+.bg-success {
+    background-color: var(--success-color) !important;
+}
+
+.bg-danger {
+    background-color: var(--danger-color) !important;
+}
