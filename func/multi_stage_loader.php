@@ -48,7 +48,7 @@ function createAdvancedMultiStageLoader($code) {
     // Generate random variable names
     $stageVars = [];
     for ($i = 0; $i < 10; $i++) {
-        $stageVars[] = generateRandomVarName(5, 12);
+        $stageVars[] = loaderRandomVarName(5, 12);
     }
     
     // Create Stage 3 (actual code)
@@ -81,20 +81,14 @@ function createAdvancedMultiStageLoader($code) {
     // Stage 2 loading
     $loader .= "// Stage 2 loading\n";
     $loader .= "\${$stageVars[3]} = str_replace('@#@', '=', \${$stageVars[2]});\n";
-    $loader .= "\${$stageVars[4]} = strrev(base64_decode(\${$stageVars[3]}));\n";
+    $loader .= "\${$stageVars[4]} = base64_decode(\${$stageVars[3]});\n";
+    $loader .= "\${$stageVars[5]} = strrev(\${$stageVars[4]});\n";
     
-    // Add more obfuscation - random control flow
-    $loader .= "// Add obfuscated control flow\n";
-    $loader .= "switch(mt_rand(1, 3)) {\n";
-    $loader .= "    case 1:\n";
-    $loader .= "    case 2:\n";
-    $loader .= "    case 3:\n";
-    $loader .= "        \${$stageVars[5]} = \${$stageVars[4]}; // This is always executed\n";
-    $loader .= "        break;\n";
-    $loader .= "}\n";
+    // Add timing jitter
+    $loader .= "usleep(mt_rand(1, 1000)); // Random microsecond delay\n";
     
-    // Final execution
-    $loader .= "// Stage 3 execution\n";
+    // Stage 3 loading (final execution)
+    $loader .= "// Stage 3 loading (final execution)\n";
     $loader .= "eval(\${$stageVars[5]});\n";
     $loader .= "?>";
     
@@ -102,97 +96,66 @@ function createAdvancedMultiStageLoader($code) {
 }
 
 /**
- * Create an advanced multi-stage loader with license key validation
+ * Create a multi-stage loader with license validation
  * 
  * @param string $code The PHP code to wrap
- * @param string $licenseKey The license key required to run the code
- * @return string The licensed multi-stage loader code
+ * @param string $licenseKey The license key to embed
+ * @return string The multi-stage loader with license validation
  */
 function createLicensedMultiStageLoader($code, $licenseKey) {
-    if (empty($code) || empty($licenseKey)) {
+    if (empty($code)) {
         return $code;
     }
     
     // Remove PHP opening/closing tags if present
     $code = preg_replace('/^\s*<\?php|\?>\s*$/i', '', $code);
     
-    // Generate random variable names
-    $stageVars = [];
-    for ($i = 0; $i < 5; $i++) {
-        $stageVars[] = generateRandomVarName(5, 10);
-    }
+    // Add license key comment to the code
+    $code = "// <{$licenseKey}> << License\n" . $code;
     
-    // Create Stage 2 (encoded actual code)
+    // Encode the code (Stage 2)
     $stage2 = base64_encode($code);
     
-    // Start building the loader
+    // Create Stage 1 (loader with license validation)
     $loader = "<?php\n";
-    $loader .= "// Protected multi-stage PHP loader\n";
+    $loader .= "// Licensed multi-stage PHP loader\n";
     
-    // Add anti-debugging protection
-    $loader .= "// Anti-debugging protection\n";
-    $loader .= "if (extension_loaded('xdebug')) {\n";
-    $loader .= "    trigger_error('Debugging is not allowed', E_USER_ERROR);\n";
+    // License validation function
+    $loader .= "function validateLicense() {\n";
+    $loader .= "    \$currentFile = file_get_contents(__FILE__);\n";
+    $loader .= "    \$pattern = '/\\/\\/\\s*<([^>]+)>\\s*<<\\s*License/';\n";
+    $loader .= "    if (preg_match(\$pattern, \$currentFile, \$matches)) {\n";
+    $loader .= "        \$embeddedLicense = trim(\$matches[1]);\n";
+    $loader .= "        return \$embeddedLicense === '{$licenseKey}';\n";
+    $loader .= "    }\n";
+    $loader .= "    return false;\n";
+    $loader .= "}\n\n";
+    
+    // Add license validation check
+    $loader .= "if (!validateLicense()) {\n";
+    $loader .= "    trigger_error('Invalid license key', E_USER_ERROR);\n";
     $loader .= "    exit(1);\n";
     $loader .= "}\n\n";
     
-    // Check execution time to detect breakpoints
-    $loader .= "// Check for unusually slow execution (possible breakpoints)\n";
-    $loader .= "\$time_start = microtime(true);\n";
-    $loader .= "\$check_sum = 0;\n";
-    $loader .= "for (\$i = 0; \$i < 1000; \$i++) {\n";
-    $loader .= "    \$check_sum += \$i;\n";
-    $loader .= "}\n";
-    $loader .= "\$time_end = microtime(true);\n";
-    $loader .= "\$execution_time = (\$time_end - \$time_start) * 1000; // milliseconds\n";
-    $loader .= "if (\$execution_time > 100) { // Threshold for debugger detection\n";
-    $loader .= "    trigger_error('Debugging detected. Execution aborted.', E_USER_ERROR);\n";
-    $loader .= "    exit(1);\n";
-    $loader .= "}\n\n";
+    // Add stage 2 loading
+    $loader .= "\$stage2 = '{$stage2}';\n";
+    $loader .= "\$decodedStage2 = base64_decode(\$stage2);\n";
+    $loader .= "eval(\$decodedStage2);\n";
     
-    // License key check function
-    $loader .= "// License key verification\n";
-    $loader .= "function {$stageVars[0]}(\$license_key) {\n";
-    $loader .= "    \$expected_key = '{$licenseKey}';\n";
-    $loader .= "    return \$license_key === \$expected_key;\n";
-    $loader .= "}\n\n";
-    
-    // Extract license from code comments
-    $loader .= "// Extract license key from running script\n";
-    $loader .= "\${$stageVars[1]} = file_get_contents(__FILE__);\n";
-    $loader .= "if (!preg_match('/License Key:\\s*([\\w\\-]+)/i', \${$stageVars[1]}, \$matches)) {\n";
-    $loader .= "    trigger_error('No license key found. Execution aborted.', E_USER_ERROR);\n";
-    $loader .= "    exit(1);\n";
-    $loader .= "}\n";
-    $loader .= "\${$stageVars[2]} = trim(\$matches[1]);\n\n";
-    
-    // Verify license key
-    $loader .= "// Verify license key\n";
-    $loader .= "if (!{$stageVars[0]}(\${$stageVars[2]})) {\n";
-    $loader .= "    trigger_error('Invalid license key. Execution aborted.', E_USER_ERROR);\n";
-    $loader .= "    exit(1);\n";
-    $loader .= "}\n\n";
-    
-    // Decode and execute code if license is valid
-    $loader .= "// License is valid - decode and execute code\n";
-    $loader .= "\${$stageVars[3]} = '{$stage2}';\n";
-    $loader .= "\${$stageVars[4]} = base64_decode(\${$stageVars[3]});\n";
-    $loader .= "eval(\${$stageVars[4]});\n\n";
-    
-    // Add license key comment for extraction
-    $loader .= "// License Key: {$licenseKey}\n";
+    // Add license comment for validation
+    $loader .= "// <{$licenseKey}> << License\n";
     $loader .= "?>";
     
     return $loader;
 }
 
 /**
- * Create a protected multi-stage loader with anti-debug and anti-edit features
+ * Create a multi-stage loader with anti-debug and anti-edit protection
  * 
  * @param string $code The PHP code to wrap
- * @param bool $addAntiDebug Whether to add anti-debugging protection
+ * @param bool $addAntiDebug Whether to add anti-debug protection
  * @param bool $addAntiEdit Whether to add anti-edit protection
- * @return string The protected multi-stage loader code
+ * @return string The protected multi-stage loader
  */
 function createProtectedMultiStageLoader($code, $addAntiDebug = true, $addAntiEdit = true) {
     if (empty($code)) {
@@ -205,7 +168,7 @@ function createProtectedMultiStageLoader($code, $addAntiDebug = true, $addAntiEd
     // Generate random variable names
     $stageVars = [];
     for ($i = 0; $i < 5; $i++) {
-        $stageVars[] = generateRandomVarName(5, 10);
+        $stageVars[] = loaderRandomVarName(5, 10);
     }
     
     // Create Stage 2 (encoded actual code)
@@ -232,8 +195,8 @@ function createProtectedMultiStageLoader($code, $addAntiDebug = true, $addAntiEd
         $loader .= "}\n";
         $loader .= "\$time_end = microtime(true);\n";
         $loader .= "\$execution_time = (\$time_end - \$time_start) * 1000; // milliseconds\n";
-        $loader .= "if (\$execution_time > 100) { // Threshold for debugger detection\n";
-        $loader .= "    trigger_error('Debugging detected. Execution aborted.', E_USER_ERROR);\n";
+        $loader .= "if (\$execution_time > 100) { // If takes more than 100ms, likely debugging\n";
+        $loader .= "    trigger_error('Debugging detected', E_USER_ERROR);\n";
         $loader .= "    exit(1);\n";
         $loader .= "}\n\n";
     }
@@ -241,51 +204,70 @@ function createProtectedMultiStageLoader($code, $addAntiDebug = true, $addAntiEd
     // Add anti-edit protection if requested
     if ($addAntiEdit) {
         $loader .= "// Anti-edit protection\n";
-        $loader .= "\${$stageVars[0]} = __FILE__;\n";
-        $loader .= "\${$stageVars[1]} = file_get_contents(\${$stageVars[0]});\n";
+        $loader .= "function calculateChecksum() {\n";
+        $loader .= "    \$content = file_get_contents(__FILE__);\n";
+        $loader .= "    \$pattern = '/\\/\\/\\s*Checksum:\\s*([a-f0-9]{64})/i';\n";
+        $loader .= "    if (preg_match(\$pattern, \$content, \$matches)) {\n";
+        $loader .= "        \$checksumLine = \$matches[0];\n";
+        $loader .= "        \$content = str_replace(\$checksumLine, '', \$content);\n";
+        $loader .= "        return hash('sha256', \$content);\n";
+        $loader .= "    }\n";
+        $loader .= "    return false;\n";
+        $loader .= "}\n\n";
         
-        // Add a checksum that we'll verify hasn't been tampered with
-        $checksumPlaceholder = "[[CHECKSUM_PLACEHOLDER]]";
-        $loader .= "\${$stageVars[2]} = '{$checksumPlaceholder}';\n";
+        $loader .= "function validateIntegrity() {\n";
+        $loader .= "    \$content = file_get_contents(__FILE__);\n";
+        $loader .= "    \$pattern = '/\\/\\/\\s*Checksum:\\s*([a-f0-9]{64})/i';\n";
+        $loader .= "    if (preg_match(\$pattern, \$content, \$matches)) {\n";
+        $loader .= "        \$embeddedChecksum = \$matches[1];\n";
+        $loader .= "        \$calculatedChecksum = calculateChecksum();\n";
+        $loader .= "        return \$embeddedChecksum === \$calculatedChecksum;\n";
+        $loader .= "    }\n";
+        $loader .= "    return false;\n";
+        $loader .= "}\n\n";
         
-        // Check if the file has been modified
-        $loader .= "// Calculate file checksum excluding the checksum line itself\n";
-        $loader .= "\${$stageVars[3]} = preg_replace('/\\\\$\\{" . $stageVars[2] . "\\} = \\'.*?\\';/m', '', \${$stageVars[1]});\n";
-        $loader .= "if (md5(\${$stageVars[3]}) !== \${$stageVars[2]}) {\n";
-        $loader .= "    trigger_error('File has been modified. Execution aborted.', E_USER_ERROR);\n";
+        $loader .= "if (!validateIntegrity()) {\n";
+        $loader .= "    trigger_error('File integrity check failed', E_USER_ERROR);\n";
         $loader .= "    exit(1);\n";
         $loader .= "}\n\n";
     }
     
-    // Decode and execute the actual code
-    $loader .= "// Decode and execute the code\n";
-    $loader .= "\${$stageVars[4]} = '{$stage2}';\n";
-    $loader .= "\$decoded_code = base64_decode(\${$stageVars[4]});\n";
-    $loader .= "eval(\$decoded_code);\n";
+    // Stage 1 loading
+    $loader .= "// Stage 1: Loader\n";
+    $loader .= "\${$stageVars[0]} = '{$stage2}';\n";
+    $loader .= "\${$stageVars[1]} = base64_decode(\${$stageVars[0]});\n";
+    $loader .= "eval(\${$stageVars[1]});\n";
+    
+    // Add checksum placeholder (will be replaced later)
+    if ($addAntiEdit) {
+        $loader .= "// Checksum: " . str_repeat('0', 64) . "\n";
+    }
+    
     $loader .= "?>";
     
-    // If anti-edit protection is enabled, insert the actual checksum
+    // Calculate and insert the actual checksum if anti-edit is enabled
     if ($addAntiEdit) {
-        // Calculate the checksum excluding the placeholder
-        $modifiedLoader = preg_replace('/\\$\\{' . $stageVars[2] . '\\} = \'' . preg_quote($checksumPlaceholder, '/') . '\';/m', '', $loader);
-        $actualChecksum = md5($modifiedLoader);
+        // Get the code without the checksum
+        $codeForChecksum = preg_replace('/\/\/\s*Checksum:\s*[a-f0-9]{64}\n/i', '', $loader);
         
-        // Insert the actual checksum
-        $loader = str_replace("'{$checksumPlaceholder}'", "'{$actualChecksum}'", $loader);
+        // Calculate the SHA-256 hash
+        $checksum = hash('sha256', $codeForChecksum);
+        
+        // Insert the checksum
+        $loader = preg_replace('/\/\/\s*Checksum:\s*[a-f0-9]{64}/i', "// Checksum: {$checksum}", $loader);
     }
     
     return $loader;
 }
 
-// Function is now imported from common_fixed.php
-// /**
-//  * Generate a random variable name specifically for multi-stage loader
-//  * 
-//  * @param int $minLength Minimum length of variable name
-//  * @param int $maxLength Maximum length of variable name
-//  * @return string Random variable name
-//  */
-// function generateRandomVarName($minLength = 5, $maxLength = 10) {
-//     // Use the common function to avoid duplication
-//     return generateRandomVarName($minLength, $maxLength);
-// }
+/**
+ * Generate a random variable name
+ * 
+ * @param int $minLength Minimum length of variable name
+ * @param int $maxLength Maximum length of variable name
+ * @return string Random variable name
+ */
+function loaderRandomVarName($minLength = 5, $maxLength = 10) {
+    // Use the common function to avoid duplication
+    return generateRandomVarName($minLength, $maxLength);
+}

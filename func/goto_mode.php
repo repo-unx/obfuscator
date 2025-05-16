@@ -18,14 +18,14 @@ function convertToGoto($code) {
     $lines = preg_split('/\r\n|\r|\n/', $code);
     
     // Generate random label prefixes
-    $labelPrefix = gotoModeRandomString(3, 5);
+    $labelPrefix = gotoRandomString(3, 5);
     
     // Create an array of labels
     $labels = [];
     $labelCount = count($lines);
     
     for ($i = 0; $i < $labelCount; $i++) {
-        $labels[] = $labelPrefix . '_' . gotoModeRandomString(3, 5);
+        $labels[] = $labelPrefix . '_' . generateRandomString(3, 5);
     }
     
     // Shuffle the order of execution but maintain the original label order for reference
@@ -39,33 +39,32 @@ function convertToGoto($code) {
     
     // Add each line with its label and goto statement to the next line
     for ($i = 0; $i < $labelCount; $i++) {
-        $nextIndex = ($i == $labelCount - 1) ? -1 : $executionOrder[$i + 1];
+        $currentIndex = array_search($i, $executionOrder);
+        $nextIndex = ($currentIndex + 1) % $labelCount;
+        $nextLabel = $labels[$executionOrder[$nextIndex]];
         
-        // Add the current label
-        $gotoCode .= "{$labels[$executionOrder[$i]]}:\n";
+        $gotoCode .= "{$labels[$i]}:\n";
+        $gotoCode .= trim($lines[$i]) . ";\n";
         
-        // Add the actual code line
-        $currentLine = trim($lines[$executionOrder[$i]]);
-        if (!empty($currentLine)) {
-            $gotoCode .= $currentLine . ";\n";
-        }
-        
-        // Add goto to the next label or exit if this is the last one
-        if ($nextIndex != -1) {
-            $gotoCode .= "goto {$labels[$nextIndex]};\n\n";
+        // Don't add goto for the last original line
+        if ($i < $labelCount - 1) {
+            $gotoCode .= "goto {$nextLabel};\n\n";
         }
     }
+    
+    $gotoCode .= "?>";
     
     return $gotoCode;
 }
 
 /**
- * Create a more complex goto-based obfuscation with junk code and unpredictable flow
+ * Advanced goto-based obfuscation with random dead code paths
  * 
  * @param string $code The PHP code to convert
- * @return string The obfuscated code
+ * @param int $junkLabels Number of junk labels to add
+ * @return string The obfuscated code with goto and junk paths
  */
-function createAdvancedGotoObfuscation($code) {
+function convertToAdvancedGoto($code, $junkLabels = 5) {
     if (empty($code)) {
         return $code;
     }
@@ -73,136 +72,108 @@ function createAdvancedGotoObfuscation($code) {
     // Remove PHP opening/closing tags if present
     $code = preg_replace('/^\s*<\?php|\?>\s*$/i', '', $code);
     
-    // Split the code into lines, filtering out empty lines
-    $lines = array_filter(preg_split('/\r\n|\r|\n/', $code), function($line) {
-        return trim($line) !== '';
-    });
-    
-    // Reset array keys
-    $lines = array_values($lines);
-    
-    // Create variable names
-    $varCounter = gotoModeRandomString(4, 8);
-    $varLimit = gotoModeRandomString(3, 7);
-    
-    // Start building results
-    $result = '';
-    
-    // Generate function names
-    $cleanerFunctionName = gotoModeRandomString(5, 10);
+    // Split the code into lines
+    $lines = preg_split('/\r\n|\r|\n/', $code);
     
     // Generate random label prefixes
-    $labelPrefix = gotoModeRandomString(3, 5);
+    $labelPrefix = gotoRandomString(3, 5);
+    $junkPrefix = gotoRandomString(3, 5);
     
-    // Create an array of real and fake labels
-    $realLabels = [];
-    $fakeLabels = [];
+    // Create arrays of real and junk labels
+    $labels = [];
     $labelCount = count($lines);
     
-    // Create real labels (for actual code)
     for ($i = 0; $i < $labelCount; $i++) {
-        $realLabels[] = $labelPrefix . '_' . gotoModeRandomString(3, 5);
+        $labels[] = $labelPrefix . '_' . generateRandomString(3, 5);
     }
     
-    // Create fake labels (for junk code)
-    for ($i = 0; $i < $labelCount * 2; $i++) {
-        $fakeLabels[] = $labelPrefix . '_' . gotoModeRandomString(3, 5);
+    // Create junk labels
+    $junkLabelsArray = [];
+    for ($i = 0; $i < $junkLabels; $i++) {
+        $junkLabelsArray[] = $junkPrefix . '_' . generateRandomString(3, 5);
     }
     
-    // Create the complete goto code with junk code
-    $result = "<?php\n";
-    $result .= "// Advanced goto-based obfuscation with junk code\n\n";
+    // Generate junk code
+    $junkCode = [];
+    for ($i = 0; $i < $junkLabels; $i++) {
+        $junkCode[] = gotoJunkCode();
+    }
     
-    // Add initialization of counter variable - used to ensure junk code doesn't execute
-    $result .= "\${$varCounter} = 0;\n";
-    $result .= "\${$varLimit} = {$labelCount};\n\n";
+    // Shuffle the order of execution
+    $executionOrder = range(0, $labelCount - 1);
+    shuffle($executionOrder);
     
-    // Add a function to clean junk code
-    $result .= "function {$cleanerFunctionName}(\$x, \$y) {\n";
-    $result .= "    return \$x > \$y;\n";
-    $result .= "}\n\n";
+    // Build the goto code
+    $gotoCode = "<?php\n";
+    $gotoCode .= "// Advanced goto-based obfuscation\n";
     
-    // Start execution with the first real label
-    $result .= "goto {$realLabels[0]};\n\n";
+    // Add a condition to decide initial path - either real code or junk
+    $gotoCode .= "if (mt_rand(0, 9) > 0) {\n"; // 90% chance for real code
+    $gotoCode .= "    goto {$labels[$executionOrder[0]]};\n";
+    $gotoCode .= "} else {\n";
+    $gotoCode .= "    goto {$junkLabelsArray[0]};\n";
+    $gotoCode .= "}\n\n";
     
-    // Insert junk goto blocks to fake labels
-    $junkInserted = 0;
-    foreach ($fakeLabels as $fakeLabel) {
-        // A junk code block that should never execute under normal conditions
-        $result .= "{$fakeLabel}:\n";
-        $result .= "if ({$cleanerFunctionName}(\${$varCounter}, \${$varLimit})) {\n";
-        $result .= "    echo " . generateJunkCode() . ";\n";
+    // Add junk code sections with goto statements that eventually lead back to real code
+    foreach ($junkLabelsArray as $index => $junkLabel) {
+        $gotoCode .= "{$junkLabel}:\n";
+        $gotoCode .= $junkCode[$index] . "\n";
         
-        // Jump to another fake label or a real one to create a complex execution graph
-        if ($junkInserted < count($fakeLabels) - 1) {
-            $nextFakeLabel = $fakeLabels[$junkInserted + 1];
-            $result .= "    goto {$nextFakeLabel};\n";
+        // 80% chance to go to real code, 20% chance to another junk section
+        if (mt_rand(0, 4) > 0 || $index == count($junkLabelsArray) - 1) {
+            $gotoCode .= "goto {$labels[$executionOrder[0]]};\n\n";
         } else {
-            $randomRealLabel = $realLabels[array_rand($realLabels)];
-            $result .= "    goto {$randomRealLabel};\n";
+            $nextJunkIndex = ($index + 1) % count($junkLabelsArray);
+            $gotoCode .= "goto {$junkLabelsArray[$nextJunkIndex]};\n\n";
         }
-        
-        $result .= "}\n\n";
-        $junkInserted++;
     }
     
-    // Add the actual code with goto statements between each line
+    // Add each real code line with its label and goto statement to the next line
     for ($i = 0; $i < $labelCount; $i++) {
-        $nextIndex = ($i == $labelCount - 1) ? -1 : $i + 1;
+        $currentIndex = array_search($i, $executionOrder);
+        $nextIndex = ($currentIndex + 1) % $labelCount;
+        $nextLabel = $labels[$executionOrder[$nextIndex]];
         
-        // Add the current label
-        $result .= "{$realLabels[$i]}:\n";
+        $gotoCode .= "{$labels[$i]}:\n";
+        $gotoCode .= trim($lines[$i]) . ";\n";
         
-        // Add counter increment to track execution progress
-        $result .= "\${$varCounter}++;\n";
-        
-        // Add the actual code line
-        $result .= trim($lines[$i]) . ";\n";
-        
-        // Add goto to the next label or exit if this is the last one
-        if ($nextIndex != -1) {
-            $result .= "goto {$realLabels[$nextIndex]};\n\n";
+        // For non-last lines, add goto with a small chance to go to junk code
+        if ($i < $labelCount - 1) {
+            if (mt_rand(0, 9) > 1) { // 80% chance for normal flow
+                $gotoCode .= "goto {$nextLabel};\n\n";
+            } else {
+                // 20% chance to go to junk code
+                $randomJunkIndex = mt_rand(0, count($junkLabelsArray) - 1);
+                $gotoCode .= "goto {$junkLabelsArray[$randomJunkIndex]};\n\n";
+            }
         }
     }
     
-    return $result;
+    $gotoCode .= "?>";
+    
+    return $gotoCode;
 }
 
-// These functions are now imported from common_fixed.php
-// /**
-//  * Generate a random string of specified length - goto mode version
-//  * 
-//  * @param int $minLength Minimum length of string
-//  * @param int $maxLength Maximum length of string
-//  * @return string Random string
-//  */
-// function gotoModeRandomString($minLength = 3, $maxLength = 10) {
-//     // Use the common function from common.php to avoid duplication
-//     return generateRandomString($minLength, $maxLength);
-// }
+/**
+ * Generate goto-specific junk code 
+ * This function uses the common generateJunkCode() function
+ * 
+ * @return string Junk PHP code for goto obfuscation
+ */
+function gotoJunkCode() {
+    // Use the common function from common.php
+    return generateJunkCode();
+}
 
 /**
- * Generate junk code for obfuscation - goto mode version
+ * Generate a random string for goto labels
+ * Renamed to avoid conflicts with common.php
  * 
- * @return string Random junk PHP code
+ * @param int $minLength Minimum length of the string
+ * @param int $maxLength Maximum length of the string
+ * @return string Random string
  */
-function _unused_gotoModeJunkCode() {
-    $junkTypes = [
-        // String operations
-        "'Junk_' . substr(md5(time()), 0, 8)",
-        "strrev('gnirts knuj emos')",
-        "str_rot13('whfg fbzr whax')",
-        "base64_encode('fakejunkdatahere')",
-        
-        // Math operations
-        "mt_rand(1000, 9999) * 0.17",
-        "pow(2, mt_rand(4, 8))",
-        "intval(decbin(mt_rand(1, 255)))",
-        
-        // Array operations
-        "array_sum([" . rand(1, 10) . "," . rand(11, 20) . "," . rand(21, 30) . "])",
-        "count(range(" . rand(1, 5) . ", " . rand(6, 10) . "))",
-    ];
-    
-    return $junkTypes[array_rand($junkTypes)];
+function gotoRandomString($minLength = 3, $maxLength = 8) {
+    // Use common function instead of duplicating code
+    return generateRandomString($minLength, $maxLength);
 }

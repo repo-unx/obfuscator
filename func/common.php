@@ -1,10 +1,11 @@
 <?php
 /**
- * Common functions used throughout the obfuscator
+ * Common utility functions for the PHP Obfuscator
+ * This file contains shared utility functions used across multiple obfuscation modules
  */
 
 /**
- * Generate a random string of specified length
+ * Generate a random string
  * 
  * @param int $minLength Minimum length of string
  * @param int $maxLength Maximum length of string
@@ -12,18 +13,19 @@
  */
 function generateRandomString($minLength = 3, $maxLength = 10) {
     $length = rand($minLength, $maxLength);
-    $characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    $randomString = '';
+    $characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    $charLength = strlen($characters);
     
+    $randomString = '';
     for ($i = 0; $i < $length; $i++) {
-        $randomString .= $characters[rand(0, strlen($characters) - 1)];
+        $randomString .= $characters[rand(0, $charLength - 1)];
     }
     
     return $randomString;
 }
 
 /**
- * Generate a random variable name
+ * Generate random variable name
  * 
  * @param int $minLength Minimum length of variable name
  * @param int $maxLength Maximum length of variable name
@@ -60,80 +62,101 @@ function generateEncryptionKey($length = 16) {
 }
 
 /**
- * Generate random junk code for obfuscation
+ * Get a timestamp-based identifier
  * 
- * @return string Random junk PHP code
+ * @param string $prefix Optional prefix for the identifier
+ * @return string Unique identifier
  */
-function generateJunkCode() {
-    $junkTypes = [
-        // String operations
-        "'Junk_' . substr(md5(time()), 0, 8)",
-        "strrev('gnirts knuj emos')",
-        "str_rot13('whfg fbzr whax')",
-        "base64_encode('fakejunkdatahere')",
-        
-        // Math operations
-        "mt_rand(1000, 9999) * 0.17",
-        "pow(2, mt_rand(4, 8))",
-        "intval(decbin(mt_rand(1, 255)))",
-        
-        // Array operations
-        "array_sum([" . rand(1, 10) . "," . rand(11, 20) . "," . rand(21, 30) . "])",
-        "count(range(" . rand(1, 5) . ", " . rand(6, 10) . "))",
-    ];
-    
-    return $junkTypes[array_rand($junkTypes)];
+function getTimestampId($prefix = '') {
+    return $prefix . time() . '_' . rand(1000, 9999);
 }
 
 /**
- * Add comments with random strings to code
+ * Generate a random junk code that doesn't actually do anything
  * 
- * @param string $code PHP code to add comments to
- * @param int $count Number of comments to add
- * @return string Code with added comments
+ * @return string Junk PHP code
  */
-function addRandomComments($code, $count = 5) {
-    $lines = explode("\n", $code);
-    $totalLines = count($lines);
+function generateJunkCode() {
+    $junkPatterns = [
+        'if (time() < 0) { echo "Never happens"; }',
+        '$temp = array(); for ($i = 0; $i < mt_rand(1, 5); $i++) { $temp[] = $i; }',
+        'function _' . generateRandomString(5, 8) . '() { return null; }',
+        '$str = ""; for ($i = 97; $i < 123; $i++) { $str .= chr($i); }',
+        'if (false) { eval("echo \'never executed\';"); }',
+        '$a = mt_rand(1, 100); $b = mt_rand(1, 100); $c = $a + $b;',
+        'preg_match("/^[a-z]+$/", "test" . mt_rand(0, 999));',
+        '$_' . generateRandomString(3, 6) . ' = base64_encode("junk_' . time() . '");',
+        'sleep(0);',
+        'usleep(mt_rand(0, 5));'
+    ];
     
-    for ($i = 0; $i < $count; $i++) {
-        $lineIndex = rand(0, $totalLines - 1);
-        $commentType = rand(0, 2);
-        
-        if ($commentType == 0) {
-            // Single line comment
-            $lines[$lineIndex] .= " // " . generateRandomString(10, 30);
-        } elseif ($commentType == 1) {
-            // Multi-line comment at start
-            $lines[$lineIndex] = "/* " . generateRandomString(10, 20) . " */ " . $lines[$lineIndex];
+    // Return a random junk code snippet
+    return $junkPatterns[array_rand($junkPatterns)];
+}
+
+/**
+ * Convert a PHP array to a string representation
+ * 
+ * @param array $array The array to convert
+ * @return string String representation of the array
+ */
+function arrayToString($array) {
+    $result = "array(";
+    $items = [];
+    
+    foreach ($array as $key => $value) {
+        if (is_int($key)) {
+            if (is_array($value)) {
+                $items[] = arrayToString($value);
+            } elseif (is_string($value)) {
+                $items[] = "'" . addslashes($value) . "'";
+            } else {
+                $items[] = $value;
+            }
         } else {
-            // Multi-line comment at end
-            $lines[$lineIndex] .= " /* " . generateRandomString(10, 20) . " */";
+            if (is_array($value)) {
+                $items[] = "'" . addslashes($key) . "' => " . arrayToString($value);
+            } elseif (is_string($value)) {
+                $items[] = "'" . addslashes($key) . "' => '" . addslashes($value) . "'";
+            } else {
+                $items[] = "'" . addslashes($key) . "' => " . $value;
+            }
         }
     }
     
-    return implode("\n", $lines);
+    $result .= implode(", ", $items) . ")";
+    return $result;
 }
 
-// Add support functions for all modules
-// This ensures the fixed modules can find their required functions
-
-// For goto_mode_fixed_2.php
-function gotoModeRandomString($minLength = 3, $maxLength = 10) {
-    return generateRandomString($minLength, $maxLength);
+/**
+ * Remove comments from PHP code
+ * 
+ * @param string $code PHP code
+ * @return string Code with comments removed
+ */
+function removeComments($code) {
+    // Remove single-line comments
+    $code = preg_replace('!//.*?$!m', '', $code);
+    
+    // Remove multi-line comments
+    $code = preg_replace('!/\*.*?\*/!s', '', $code);
+    
+    return $code;
 }
 
-function gotoModeJunkCode() {
-    return generateJunkCode();
+/**
+ * Add a license comment to PHP code
+ * 
+ * @param string $code The PHP code
+ * @param string $licenseKey The license key to add
+ * @return string PHP code with license comment
+ */
+function addLicenseComment($code, $licenseKey) {
+    // Remove PHP opening/closing tags if present
+    $code = preg_replace('/^\s*<\?php|\?>\s*$/i', '', $code);
+    
+    // Add license comment to the code
+    $codeWithLicense = "// <{$licenseKey}> << License\n" . $code;
+    
+    return $codeWithLicense;
 }
-
-// For semi_compiler_fixed.php
-function semiCompilerRandomVarName($minLength = 5, $maxLength = 10) {
-    return generateRandomVarName($minLength, $maxLength);
-}
-
-// For multi_stage_loader_fixed.php
-function msLoaderRandomVarName($minLength = 5, $maxLength = 10) {
-    return generateRandomVarName($minLength, $maxLength);
-}
-?>

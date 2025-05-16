@@ -1,16 +1,16 @@
 <?php
 session_start();
-require_once 'func/common.php';
+require_once 'common_fixed.php';
 require_once 'func/compress.php';
 require_once 'func/eval_mode.php';
-require_once 'func/goto_mode.php';
-require_once 'func/semi_compiler.php';
+require_once 'func/goto_mode_fixed_2.php';
+require_once 'func/semi_compiler_fixed.php';
 require_once 'func/encryptor.php';
 require_once 'func/chunker.php';
 require_once 'func/anti_debug.php';
 require_once 'func/anti_edit.php';
 require_once 'func/layered_encrypt.php';
-require_once 'func/multi_stage_loader.php';
+require_once 'func/multi_stage_loader_fixed.php';
 require_once 'func/obfuscator.php';
 require_once 'func/split_function.php';
 require_once 'func/dynamic_code.php';
@@ -75,7 +75,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -84,7 +83,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="assets/style.css">
 </head>
-
 <body class="bg-light">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
@@ -96,15 +94,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <div class="container py-4">
         <?php if (!empty($errorMessage)): ?>
-        <div class="alert alert-danger">
-            <?php echo htmlspecialchars($errorMessage); ?>
-        </div>
+            <div class="alert alert-danger">
+                <?php echo htmlspecialchars($errorMessage); ?>
+            </div>
         <?php endif; ?>
-
+        
         <?php if (!empty($outputFile)): ?>
-        <div class="alert alert-success">
-            <i class="bi bi-check-circle"></i> File saved successfully to: <?php echo htmlspecialchars($outputFile); ?>
-        </div>
+            <div class="alert alert-success">
+                <i class="bi bi-check-circle"></i> File saved successfully to: <?php echo htmlspecialchars($outputFile); ?>
+            </div>
         <?php endif; ?>
 
         <div class="row">
@@ -117,139 +115,96 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <form action="" method="POST">
                             <div class="mb-3">
                                 <label for="code" class="form-label">PHP Code to Obfuscate</label>
-                                <textarea class="form-control code-area" name="code" id="code" rows="12"
-                                    required><?php echo isset($_POST['code']) ? htmlspecialchars($_POST['code']) : ''; ?></textarea>
+                                <textarea class="form-control code-area" name="code" id="code" rows="12" required><?php echo isset($_POST['code']) ? htmlspecialchars($_POST['code']) : ''; ?></textarea>
                             </div>
 
                             <div class="row">
                                 <div class="col-md-6">
                                     <h5>Basic Options</h5>
                                     <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" name="compress" id="compress"
-                                            <?php echo isset($_POST['compress']) ? 'checked' : ''; ?>>
+                                        <input class="form-check-input" type="checkbox" name="compress" id="compress" <?php echo isset($_POST['compress']) ? 'checked' : ''; ?>>
                                         <label class="form-check-label" for="compress">Compress HTML/CSS/JS</label>
                                     </div>
                                     <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" name="eval_mode" id="eval_mode"
-                                            <?php echo isset($_POST['eval_mode']) ? 'checked' : ''; ?>>
+                                        <input class="form-check-input" type="checkbox" name="eval_mode" id="eval_mode" <?php echo isset($_POST['eval_mode']) ? 'checked' : ''; ?>>
                                         <label class="form-check-label" for="eval_mode">Convert to Eval Mode</label>
                                     </div>
                                     <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" name="goto_mode" id="goto_mode"
-                                            <?php echo isset($_POST['goto_mode']) ? 'checked' : ''; ?>>
+                                        <input class="form-check-input" type="checkbox" name="goto_mode" id="goto_mode" <?php echo isset($_POST['goto_mode']) ? 'checked' : ''; ?>>
                                         <label class="form-check-label" for="goto_mode">Use Goto Obfuscation</label>
                                     </div>
                                     <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" name="semi_compiler"
-                                            id="semi_compiler"
-                                            <?php echo isset($_POST['semi_compiler']) ? 'checked' : ''; ?>>
-                                        <label class="form-check-label" for="semi_compiler">Use Semi-Compiler
-                                            Mode</label>
+                                        <input class="form-check-input" type="checkbox" name="semi_compiler" id="semi_compiler" <?php echo isset($_POST['semi_compiler']) ? 'checked' : ''; ?>>
+                                        <label class="form-check-label" for="semi_compiler">Use Semi-Compiler Mode</label>
                                     </div>
                                     <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" name="encrypt_mode"
-                                            id="encrypt_mode"
-                                            <?php echo isset($_POST['encrypt_mode']) ? 'checked' : ''; ?>>
-                                        <label class="form-check-label" for="encrypt_mode">Encrypt Code
-                                            (AES-256)</label>
+                                        <input class="form-check-input" type="checkbox" name="encrypt_mode" id="encrypt_mode" <?php echo isset($_POST['encrypt_mode']) ? 'checked' : ''; ?>>
+                                        <label class="form-check-label" for="encrypt_mode">Encrypt Code (AES-256)</label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <h5>Advanced Protection</h5>
                                     <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" name="chunking" id="chunking"
-                                            <?php echo isset($_POST['chunking']) ? 'checked' : ''; ?>>
+                                        <input class="form-check-input" type="checkbox" name="chunking" id="chunking" <?php echo isset($_POST['chunking']) ? 'checked' : ''; ?>>
                                         <label class="form-check-label" for="chunking">Function Chunking</label>
                                     </div>
                                     <div class="mb-2">
                                         <label for="chunk_size" class="form-label">Chunk Size (lines)</label>
-                                        <input type="number" class="form-control form-control-sm" name="chunk_size"
-                                            id="chunk_size" min="1" max="20"
-                                            value="<?php echo isset($_POST['chunk_size']) ? intval($_POST['chunk_size']) : 5; ?>">
+                                        <input type="number" class="form-control form-control-sm" name="chunk_size" id="chunk_size" min="1" max="20" value="<?php echo isset($_POST['chunk_size']) ? intval($_POST['chunk_size']) : 5; ?>">
                                     </div>
                                     <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" name="anti_debug"
-                                            id="anti_debug" <?php echo isset($_POST['anti_debug']) ? 'checked' : ''; ?>>
-                                        <label class="form-check-label" for="anti_debug">Add Anti-Debug
-                                            Protection</label>
+                                        <input class="form-check-input" type="checkbox" name="anti_debug" id="anti_debug" <?php echo isset($_POST['anti_debug']) ? 'checked' : ''; ?>>
+                                        <label class="form-check-label" for="anti_debug">Add Anti-Debug Protection</label>
                                     </div>
                                     <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" name="anti_edit" id="anti_edit"
-                                            <?php echo isset($_POST['anti_edit']) ? 'checked' : ''; ?>>
+                                        <input class="form-check-input" type="checkbox" name="anti_edit" id="anti_edit" <?php echo isset($_POST['anti_edit']) ? 'checked' : ''; ?>>
                                         <label class="form-check-label" for="anti_edit">Add Anti-Edit Protection</label>
                                     </div>
                                     <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" name="multi_stage"
-                                            id="multi_stage"
-                                            <?php echo isset($_POST['multi_stage']) ? 'checked' : ''; ?>>
+                                        <input class="form-check-input" type="checkbox" name="multi_stage" id="multi_stage" <?php echo isset($_POST['multi_stage']) ? 'checked' : ''; ?>>
                                         <label class="form-check-label" for="multi_stage">Use Multi-Stage Loader</label>
                                     </div>
                                     <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" name="layered_encrypt"
-                                            id="layered_encrypt"
-                                            <?php echo isset($_POST['layered_encrypt']) ? 'checked' : ''; ?>>
-                                        <label class="form-check-label" for="layered_encrypt">Use Layered
-                                            Encryption</label>
+                                        <input class="form-check-input" type="checkbox" name="layered_encrypt" id="layered_encrypt" <?php echo isset($_POST['layered_encrypt']) ? 'checked' : ''; ?>>
+                                        <label class="form-check-label" for="layered_encrypt">Use Layered Encryption</label>
                                     </div>
                                     <div class="mb-2">
                                         <label for="encryption_layers" class="form-label">Encryption Layers</label>
-                                        <input type="number" class="form-control form-control-sm"
-                                            name="encryption_layers" id="encryption_layers" min="1" max="5"
-                                            value="<?php echo isset($_POST['encryption_layers']) ? intval($_POST['encryption_layers']) : 1; ?>">
+                                        <input type="number" class="form-control form-control-sm" name="encryption_layers" id="encryption_layers" min="1" max="5" value="<?php echo isset($_POST['encryption_layers']) ? intval($_POST['encryption_layers']) : 1; ?>">
                                     </div>
-
+                                    
                                     <h6 class="mt-3 mb-2">Dynamic Code Generation</h6>
                                     <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" name="dynamic_code"
-                                            id="dynamic_code"
-                                            <?php echo isset($_POST['dynamic_code']) ? 'checked' : ''; ?>>
-                                        <label class="form-check-label" for="dynamic_code">Runtime Function
-                                            Generation</label>
+                                        <input class="form-check-input" type="checkbox" name="dynamic_code" id="dynamic_code" <?php echo isset($_POST['dynamic_code']) ? 'checked' : ''; ?>>
+                                        <label class="form-check-label" for="dynamic_code">Runtime Function Generation</label>
                                     </div>
                                     <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" name="self_modifying"
-                                            id="self_modifying"
-                                            <?php echo isset($_POST['self_modifying']) ? 'checked' : ''; ?>>
+                                        <input class="form-check-input" type="checkbox" name="self_modifying" id="self_modifying" <?php echo isset($_POST['self_modifying']) ? 'checked' : ''; ?>>
                                         <label class="form-check-label" for="self_modifying">Self-Modifying Code</label>
                                     </div>
-
+                                    
                                     <h6 class="mt-3 mb-2">Integrity Protection</h6>
                                     <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" name="integrity_check"
-                                            id="integrity_check"
-                                            <?php echo isset($_POST['integrity_check']) ? 'checked' : ''; ?>>
-                                        <label class="form-check-label" for="integrity_check">Add Integrity
-                                            Verification</label>
+                                        <input class="form-check-input" type="checkbox" name="integrity_check" id="integrity_check" <?php echo isset($_POST['integrity_check']) ? 'checked' : ''; ?>>
+                                        <label class="form-check-label" for="integrity_check">Add Integrity Verification</label>
                                     </div>
                                     <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" name="tamper_detection"
-                                            id="tamper_detection"
-                                            <?php echo isset($_POST['tamper_detection']) ? 'checked' : ''; ?>>
-                                        <label class="form-check-label" for="tamper_detection">Add Tamper
-                                            Detection</label>
+                                        <input class="form-check-input" type="checkbox" name="tamper_detection" id="tamper_detection" <?php echo isset($_POST['tamper_detection']) ? 'checked' : ''; ?>>
+                                        <label class="form-check-label" for="tamper_detection">Add Tamper Detection</label>
                                     </div>
-
+                                    
                                     <h6 class="mt-3 mb-2">Enhanced Anti-Debugging</h6>
                                     <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" name="advanced_anti_debug"
-                                            id="advanced_anti_debug"
-                                            <?php echo isset($_POST['advanced_anti_debug']) ? 'checked' : ''; ?>>
-                                        <label class="form-check-label" for="advanced_anti_debug">Advanced
-                                            Anti-Debugging</label>
+                                        <input class="form-check-input" type="checkbox" name="advanced_anti_debug" id="advanced_anti_debug" <?php echo isset($_POST['advanced_anti_debug']) ? 'checked' : ''; ?>>
+                                        <label class="form-check-label" for="advanced_anti_debug">Advanced Anti-Debugging</label>
                                     </div>
                                     <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" name="anti_tracing"
-                                            id="anti_tracing"
-                                            <?php echo isset($_POST['anti_tracing']) ? 'checked' : ''; ?>>
-                                        <label class="form-check-label" for="anti_tracing">Anti-Tracing
-                                            Protection</label>
+                                        <input class="form-check-input" type="checkbox" name="anti_tracing" id="anti_tracing" <?php echo isset($_POST['anti_tracing']) ? 'checked' : ''; ?>>
+                                        <label class="form-check-label" for="anti_tracing">Anti-Tracing Protection</label>
                                     </div>
                                     <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" name="aggressive_debug"
-                                            id="aggressive_debug"
-                                            <?php echo isset($_POST['aggressive_debug']) ? 'checked' : ''; ?>>
-                                        <label class="form-check-label" for="aggressive_debug">Aggressive Anti-Debug
-                                            Mode</label>
+                                        <input class="form-check-input" type="checkbox" name="aggressive_debug" id="aggressive_debug" <?php echo isset($_POST['aggressive_debug']) ? 'checked' : ''; ?>>
+                                        <label class="form-check-label" for="aggressive_debug">Aggressive Anti-Debug Mode</label>
                                     </div>
                                 </div>
                             </div>
@@ -258,22 +213,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label for="licence" class="form-label">License Key (Optional)</label>
-                                        <input type="text" class="form-control" name="licence" id="licence"
-                                            value="<?php echo isset($_POST['licence']) ? htmlspecialchars($_POST['licence']) : ''; ?>"
-                                            placeholder="Enter license key to add license validation">
+                                        <input type="text" class="form-control" name="licence" id="licence" value="<?php echo isset($_POST['licence']) ? htmlspecialchars($_POST['licence']) : ''; ?>" placeholder="Enter license key to add license validation">
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <div class="form-check mb-2">
-                                            <input class="form-check-input" type="checkbox" name="save_file"
-                                                id="save_file"
-                                                <?php echo isset($_POST['save_file']) ? 'checked' : ''; ?>>
+                                            <input class="form-check-input" type="checkbox" name="save_file" id="save_file" <?php echo isset($_POST['save_file']) ? 'checked' : ''; ?>>
                                             <label class="form-check-label" for="save_file">Save to file</label>
                                         </div>
-                                        <input type="text" class="form-control" name="filename" id="filename"
-                                            value="<?php echo isset($_POST['filename']) ? htmlspecialchars($_POST['filename']) : 'obfuscated.php'; ?>"
-                                            placeholder="output filename.php">
+                                        <input type="text" class="form-control" name="filename" id="filename" value="<?php echo isset($_POST['filename']) ? htmlspecialchars($_POST['filename']) : 'obfuscated.php'; ?>" placeholder="output filename.php">
                                     </div>
                                 </div>
                             </div>
@@ -299,15 +248,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="card-body">
                         <p>This PHP Obfuscator includes several powerful features:</p>
                         <ul class="info-list">
-                            <li><strong>Function Chunking</strong>: Splits your code into small randomized functions
-                            </li>
-                            <li><strong>Multi-Stage Loader</strong>: Creates a loader that decodes and executes the main
-                                code</li>
+                            <li><strong>Function Chunking</strong>: Splits your code into small randomized functions</li>
+                            <li><strong>Multi-Stage Loader</strong>: Creates a loader that decodes and executes the main code</li> 
                             <li><strong>License Protection</strong>: Adds license validation to your code</li>
                             <li><strong>Anti-Debug</strong>: Prevents debugging of your code</li>
                             <li><strong>Anti-Edit</strong>: Prevents modification of your code</li>
-                            <li><strong>Layered Encryption</strong>: Multiple layers of encryption for stronger
-                                protection</li>
+                            <li><strong>Layered Encryption</strong>: Multiple layers of encryption for stronger protection</li>
                         </ul>
                         <div class="alert alert-warning">
                             <i class="bi bi-exclamation-triangle"></i> Always keep a backup of your original code!
@@ -343,23 +289,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </footer>
 
     <script>
-    function copyToClipboard() {
-        const resultCode = document.querySelector('.result-code code');
-        const textArea = document.createElement('textarea');
-        textArea.value = resultCode.textContent;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-
-        const copyBtn = document.querySelector('.copy-btn');
-        const originalText = copyBtn.innerHTML;
-        copyBtn.innerHTML = '<i class="bi bi-check-lg"></i> Copied!';
-        setTimeout(() => {
-            copyBtn.innerHTML = originalText;
-        }, 2000);
-    }
+        function copyToClipboard() {
+            const resultCode = document.querySelector('.result-code code');
+            const textArea = document.createElement('textarea');
+            textArea.value = resultCode.textContent;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            
+            const copyBtn = document.querySelector('.copy-btn');
+            const originalText = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="bi bi-check-lg"></i> Copied!';
+            setTimeout(() => {
+                copyBtn.innerHTML = originalText;
+            }, 2000);
+        }
     </script>
 </body>
-
 </html>
